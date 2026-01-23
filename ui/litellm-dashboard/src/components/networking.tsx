@@ -7823,6 +7823,7 @@ export const leaderboardCall = async (
   start_date?: string,
   end_date?: string,
   custom_llm_provider?: string,
+  user_type?: string,
 ) => {
   /**
    * Get all active users by request count with customizable date range
@@ -7844,6 +7845,11 @@ export const leaderboardCall = async (
     // Add custom_llm_provider filter if provided
     if (custom_llm_provider) {
       queryParams.append("custom_llm_provider", custom_llm_provider);
+    }
+
+    // Add user_type filter if provided
+    if (user_type) {
+      queryParams.append("user_type", user_type);
     }
 
     const queryString = queryParams.toString();
