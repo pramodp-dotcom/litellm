@@ -61,6 +61,7 @@ interface LeaderboardUser {
   user_id: string;
   user_email: string | null;
   request_count: number;
+  user_type: string | null;  // "user", "service_account", "programmatic"
 }
 
 interface LeaderboardResponse {
@@ -109,6 +110,14 @@ const UserAgentActivity: React.FC<UserAgentActivityProps> = ({ accessToken, user
 
   // Email search state for leaderboard
   const [leaderboardEmailSearch, setLeaderboardEmailSearch] = useState("");
+
+  // User type filter state for leaderboard tabs
+  const [leaderboardUserType, setLeaderboardUserType] = useState<string>("user");
+  const LEADERBOARD_USER_TYPES = [
+    { value: "user", label: "Users" },
+    { value: "service_account", label: "Service Accounts" },
+    { value: "programmatic", label: "Programmatic" },
+  ];
 
   // MAU months selector state
   const [mauMonths, setMauMonths] = useState<number>(7);
@@ -236,6 +245,7 @@ const UserAgentActivity: React.FC<UserAgentActivityProps> = ({ accessToken, user
         dateValue.from ? formatDate(dateValue.from) : undefined,
         dateValue.to ? formatDate(dateValue.to) : undefined,
         showHostedVllmOnly ? CUSTOM_LLM_PROVIDER : undefined,
+        leaderboardUserType || undefined,
       );
       setLeaderboardData(data);
       // Reset to first page when data changes
@@ -303,7 +313,7 @@ const UserAgentActivity: React.FC<UserAgentActivityProps> = ({ accessToken, user
     }, 50);
 
     return () => clearTimeout(timeoutId);
-  }, [accessToken, showHostedVllmOnly, dateValue]);
+  }, [accessToken, showHostedVllmOnly, dateValue, leaderboardUserType]);
 
   // Effect for today's leaderboard data (always fetches for today only)
   useEffect(() => {
@@ -725,14 +735,29 @@ const UserAgentActivity: React.FC<UserAgentActivityProps> = ({ accessToken, user
                 )}
               </Subtitle>
             </div>
-            <Search
-              placeholder="Search by email or user ID"
-              allowClear
-              value={leaderboardEmailSearch}
-              onChange={(e) => setLeaderboardEmailSearch(e.target.value)}
-              style={{ width: 350 }}
-              size="middle"
-            />
+            <div className="flex items-center gap-4">
+              {/* User Type Tabs */}
+              <TabGroup>
+                <TabList>
+                  {LEADERBOARD_USER_TYPES.map((type) => (
+                    <Tab
+                      key={type.value ?? "all"}
+                      onClick={() => setLeaderboardUserType(type.value)}
+                    >
+                      {type.label}
+                    </Tab>
+                  ))}
+                </TabList>
+              </TabGroup>
+              <Search
+                placeholder="Search by email or user ID"
+                allowClear
+                value={leaderboardEmailSearch}
+                onChange={(e) => setLeaderboardEmailSearch(e.target.value)}
+                style={{ width: 250 }}
+                size="middle"
+              />
+            </div>
           </div>
 
           {leaderboardLoading ? (

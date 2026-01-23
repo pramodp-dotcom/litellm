@@ -141,6 +141,7 @@ model LiteLLM_UserTable {
     password  String?
     teams    String[] @default([])
     user_role  String?
+    user_type  String? // "user", "service_account", "programmatic"
 		max_budget Float?
     spend      Float    @default(0.0)
     user_email    String?

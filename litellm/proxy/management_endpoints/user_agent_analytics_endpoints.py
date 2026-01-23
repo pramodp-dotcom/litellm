@@ -823,6 +823,7 @@ class LeaderboardUser(BaseModel):
     user_id: str
     user_email: Optional[str] = None
     request_count: int
+    user_type: Optional[str] = None  # "user", "service_account", "programmatic"
 
 
 class LeaderboardResponse(BaseModel):
@@ -849,6 +850,10 @@ async def get_user_leaderboard(
     custom_llm_provider: Optional[str] = Query(
         default=None,
         description="Filter by custom LLM provider (e.g., 'hosted_vllm') (optional)",
+    ),
+    user_type: Optional[str] = Query(
+        default=None,
+        description="Filter by user type: 'user', 'service_account', 'programmatic' (optional)",
     ),
     user_api_key_dict: UserAPIKeyAuth = Depends(user_api_key_auth),
 ):
@@ -943,11 +948,12 @@ async def get_user_leaderboard(
             where={"user_id": {"in": user_ids}}
         )
 
-        # Create mapping from user_id to user_email
-        user_id_to_email = {
-            record.user_id: record.user_email
-            for record in user_records
-        }
+        # Create mapping from user_id to user_email and user_type
+        user_id_to_email = {}
+        user_id_to_user_type = {}
+        for record in user_records:
+            user_id_to_email[record.user_id] = record.user_email
+            user_id_to_user_type[record.user_id] = record.user_type
 
         # Aggregate request counts by user_id (summing across api_keys)
         user_counts: Dict[str, int] = {}
@@ -964,8 +970,16 @@ async def get_user_leaderboard(
                     user_id=user_id,
                     user_email=user_id_to_email.get(user_id),
                     request_count=request_count,
+                    user_type=user_id_to_user_type.get(user_id),
                 )
             )
+
+        # Filter by user_type if specified
+        if user_type:
+            leaderboard_entries = [
+                entry for entry in leaderboard_entries
+                if entry.user_type == user_type
+            ]
 
         # Sort by request count (descending)
         leaderboard_entries.sort(key=lambda x: x.request_count, reverse=True)
